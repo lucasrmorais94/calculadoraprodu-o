@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <title>Calculadora de Contribuição na Produção</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 40px;
+    }
+    label, input {
+      display: block;
+      margin-bottom: 10px;
+    }
+    button {
+      margin-top: 20px;
+      padding: 10px 20px;
+    }
+    table {
+      margin-top: 30px;
+      border-collapse: collapse;
+      width: 100%;
+    }
+    th, td {
+      border: 1px solid #aaa;
+      padding: 10px;
+      text-align: center;
+    }
+    th {
+      background-color: #eee;
+    }
+  </style>
+</head>
+<body>
+
+  <h2>Calculadora de Contribuição na Produção</h2>
+
+  <label>Perda total de produção (t): <input type="number" id="perdaTotal" placeholder="Ex: 82006"></label>
+  <label>Variação DF (%) (ex: 3 para +3%, -2 para -2%): <input type="number" id="df"></label>
+  <label>Variação UDF (%) (ex: -13 para -13%): <input type="number" id="udf"></label>
+  <label>Variação Taxa (t/h) (%) (ex: -1 para -1%): <input type="number" id="taxa"></label>
+
+  <button onclick="calcular()">Calcular Contribuições</button>
+
+  <table id="resultado" style="display:none;">
+    <thead>
+      <tr>
+        <th>Indicador</th>
+        <th>Variação (%)</th>
+        <th>Contribuição (t)</th>
+      </tr>
+    </thead>
+    <tbody>
+    </tbody>
+  </table>
+
+  <script>
+    function calcular() {
+      const perdaTotal = parseFloat(document.getElementById('perdaTotal').value);
+      const df = parseFloat(document.getElementById('df').value);
+      const udf = parseFloat(document.getElementById('udf').value);
+      const taxa = parseFloat(document.getElementById('taxa').value);
+
+      const indicadores = [
+        { nome: "DF (%)", variacao: df },
+        { nome: "UDF (%)", variacao: udf },
+        { nome: "Taxa (t/h)", variacao: taxa }
+      ];
+
+      const pesoTotal = indicadores.reduce((soma, ind) => soma + Math.abs(ind.variacao), 0);
+
+      const corpoTabela = document.querySelector("#resultado tbody");
+      corpoTabela.innerHTML = "";
+
+      indicadores.forEach(ind => {
+        const proporcao = Math.abs(ind.variacao) / pesoTotal;
+        const contribuicao = proporcao * perdaTotal;
+
+        const linha = `<tr>
+            <td>${ind.nome}</td>
+            <td>${ind.variacao > 0 ? "+" : ""}${ind.variacao.toFixed(2)}%</td>
+            <td>${contribuicao.toFixed(2)}</td>
+          </tr>`;
+        corpoTabela.innerHTML += linha;
+      });
+
+      document.getElementById('resultado').style.display = 'table';
+    }
+  </script>
+
+</body>
+</html>
