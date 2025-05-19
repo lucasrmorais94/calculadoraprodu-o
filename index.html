@@ -2,24 +2,25 @@
 <html lang="pt-br">
 <head>
   <meta charset="UTF-8">
-  <title>Calculadora de Contribuição na Produção</title>
+  <title>Impacto dos Indicadores na Produção</title>
   <style>
     body {
       font-family: Arial, sans-serif;
-      margin: 40px;
+      margin: 30px;
     }
-    label, input {
-      display: block;
-      margin-bottom: 10px;
+    input {
+      margin: 5px 0;
+      padding: 5px;
+      width: 200px;
     }
     button {
-      margin-top: 20px;
+      margin-top: 15px;
       padding: 10px 20px;
     }
     table {
       margin-top: 30px;
       border-collapse: collapse;
-      width: 100%;
+      width: 80%;
     }
     th, td {
       border: 1px solid #aaa;
@@ -29,16 +30,32 @@
     th {
       background-color: #eee;
     }
+    .positivo {
+      color: green;
+    }
+    .negativo {
+      color: red;
+    }
   </style>
 </head>
 <body>
 
   <h2>Calculadora de Contribuição na Produção</h2>
 
-  <label>Perda total de produção (t): <input type="number" id="perdaTotal" placeholder="Ex: 82006"></label>
-  <label>Variação DF (%) (ex: 3 para +3%, -2 para -2%): <input type="number" id="df"></label>
-  <label>Variação UDF (%) (ex: -13 para -13%): <input type="number" id="udf"></label>
-  <label>Variação Taxa (t/h) (%) (ex: -1 para -1%): <input type="number" id="taxa"></label>
+  <label>Perda total de produção (t):<br>
+    <input type="number" id="perdaTotal" placeholder="Ex: 82006">
+  </label><br><br>
+
+  <strong>Informe os valores reais e as metas:</strong><br><br>
+
+  <label>DF - Real:<br><input type="number" id="df_real" placeholder="Ex: 89.4"></label><br>
+  <label>DF - Meta:<br><input type="number" id="df_meta" placeholder="Ex: 86.8"></label><br><br>
+
+  <label>UDF - Real:<br><input type="number" id="udf_real" placeholder="Ex: 55.7"></label><br>
+  <label>UDF - Meta:<br><input type="number" id="udf_meta" placeholder="Ex: 64"></label><br><br>
+
+  <label>Taxa - Real (t/h):<br><input type="number" id="taxa_real" placeholder="Ex: 326.8"></label><br>
+  <label>Taxa - Meta (t/h):<br><input type="number" id="taxa_meta" placeholder="Ex: 330"></label><br><br>
 
   <button onclick="calcular()">Calcular Contribuições</button>
 
@@ -50,41 +67,70 @@
         <th>Contribuição (t)</th>
       </tr>
     </thead>
-    <tbody>
-    </tbody>
+    <tbody></tbody>
   </table>
 
   <script>
     function calcular() {
       const perdaTotal = parseFloat(document.getElementById('perdaTotal').value);
-      const df = parseFloat(document.getElementById('df').value);
-      const udf = parseFloat(document.getElementById('udf').value);
-      const taxa = parseFloat(document.getElementById('taxa').value);
 
       const indicadores = [
-        { nome: "DF (%)", variacao: df },
-        { nome: "UDF (%)", variacao: udf },
-        { nome: "Taxa (t/h)", variacao: taxa }
+        {
+          nome: "DF (%)",
+          real: parseFloat(document.getElementById('df_real').value),
+          meta: parseFloat(document.getElementById('df_meta').value)
+        },
+        {
+          nome: "UDF (%)",
+          real: parseFloat(document.getElementById('udf_real').value),
+          meta: parseFloat(document.getElementById('udf_meta').value)
+        },
+        {
+          nome: "Taxa (t/h)",
+          real: parseFloat(document.getElementById('taxa_real').value),
+          meta: parseFloat(document.getElementById('taxa_meta').value)
+        }
       ];
 
-      const pesoTotal = indicadores.reduce((soma, ind) => soma + Math.abs(ind.variacao), 0);
-
-      const corpoTabela = document.querySelector("#resultado tbody");
-      corpoTabela.innerHTML = "";
-
-      indicadores.forEach(ind => {
-        const proporcao = Math.abs(ind.variacao) / pesoTotal;
-        const contribuicao = proporcao * perdaTotal;
-
-        const linha = `<tr>
-            <td>${ind.nome}</td>
-            <td>${ind.variacao > 0 ? "+" : ""}${ind.variacao.toFixed(2)}%</td>
-            <td>${contribuicao.toFixed(2)}</td>
-          </tr>`;
-        corpoTabela.innerHTML += linha;
+      // Cálculo das variações e separação entre positivos e negativos
+      indicadores.forEach(i => {
+        i.variacao = ((i.real - i.meta) / i.meta) * 100;
       });
 
-      document.getElementById('resultado').style.display = 'table';
+      const positivos = indicadores.filter(i => i.variacao > 0);
+      const negativos = indicadores.filter(i => i.variacao < 0);
+
+      const pesoNeg = negativos.reduce((soma, i) => soma + Math.abs(i.variacao), 0);
+      const pesoPos = positivos.reduce((soma, i) => soma + Math.abs(i.variacao), 0);
+
+      const corpo = document.querySelector("#resultado tbody");
+      corpo.innerHTML = "";
+
+      // Contribuições negativas (agravam a perda)
+      negativos.forEach(i => {
+        const proporcao = Math.abs(i.variacao) / pesoNeg;
+        const impacto = proporcao * perdaTotal;
+        corpo.innerHTML += `
+          <tr>
+            <td>${i.nome}</td>
+            <td class="negativo">${i.variacao.toFixed(2)}%</td>
+            <td>${impacto.toFixed(2)}</td>
+          </tr>`;
+      });
+
+      // Contribuições positivas (reduzem a perda)
+      positivos.forEach(i => {
+        const proporcao = Math.abs(i.variacao) / pesoPos;
+        const impacto = proporcao * perdaTotal;
+        corpo.innerHTML += `
+          <tr>
+            <td>${i.nome}</td>
+            <td class="positivo">+${i.variacao.toFixed(2)}%</td>
+            <td>-${impacto.toFixed(2)}</td>
+          </tr>`;
+      });
+
+      document.getElementById('resultado').style.display = "table";
     }
   </script>
 
